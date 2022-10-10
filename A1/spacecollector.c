@@ -220,7 +220,7 @@ void init_enemies(unsigned char type, int number_of_enemy_type)
       pthread_create(&enemy_blackhole_tid[i], &enemy_attr, (void* (*)(void*)) enemyBlackhole, blackhole);
     }
   }
-  pthread_attr_setdetachstate(&enemy_attr, PTHREAD_CREATE_JOINABLE);
+  pthread_attr_setdetachstate(&enemy_attr, PTHREAD_CREATE_DETACHED);
 
   
 
