@@ -1,0 +1,3 @@
+[submodule "SLP"]
+	path = SLP
+	url = https://extgit.iaik.tugraz.at/slp/upstream.git
