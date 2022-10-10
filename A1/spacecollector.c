@@ -133,13 +133,10 @@ void *enemyAlien(parameters *params)
   // TODO (4):
   // -) set the alien position correctly
   // -) spawn the enemy alien correctly in the map
-  pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
-  pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
-
 
   position enemy_pos = {params->pos_x_ / 2, params->pos_y_ / 2};
-  spawnEnemy((char)ENEMY_ALIEN, params->pos_x_ / 2, params->pos_y_ / 2);
-  free(params);
+  spawnEnemy(params->type_, params->pos_x_ / 2, params->pos_y_ / 2);
+  //free(params);
 
   // TODO END
 
@@ -231,8 +228,6 @@ void init_enemies(unsigned char type, int number_of_enemy_type)
 
 void *placeCrate(parameters *params)
 {
-  pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
-  pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
   if (params->type_ != SUPPLY_CRATE)
     return (void *)-1;
 
@@ -240,7 +235,9 @@ void *placeCrate(parameters *params)
   // - In general there should be only one crate on the map at a time
   // - place the crate on the position taken from the function parameters
   // - the crate has to disappear immediately if it gets collected. Think about what mechanism/characteristic which could be used for this.
- 
+  pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
+  pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
+
   unsigned char position_x = params->pos_x_;
   unsigned char position_y = params->pos_y_;
 
@@ -278,8 +275,8 @@ int main(int argc, char* argv[])
 
   pthread_create(&player_tid, NULL, (void* (*)(void*))playerLogic, NULL);
 
-  init_enemies((unsigned char) ENEMY_ALIEN, (int)ENEMY_ALIEN);
-  init_enemies((unsigned char) ENEMY_BLACKHOLE,(int) ENEMY_BLACKHOLE);
+  init_enemies((unsigned char) ENEMY_ALIEN, NUMBER_ALIENS);
+  init_enemies((unsigned char) ENEMY_BLACKHOLE,NUMBER_BLACKHOLES);
 
 
   // TODO END
@@ -310,10 +307,11 @@ int main(int argc, char* argv[])
     if (crate_collected_flag == 1)
     {
       // TODO (8): Further implementations from TODO above
-      // pthread_join(crate_tid, &rvalue_crates);      
+      pthread_join(crate_tid, &rvalue_crates);      
       
       crate.pos_x_ = getRandPosX();
       crate.pos_y_ = getRandPosY();
+      crate.type_ = (char)SUPPLY_CRATE;
       pthread_create(&crate_tid, NULL, (void* (*)(void*)) placeCrate, &crate);
       
       crate_collected_flag = 0;
