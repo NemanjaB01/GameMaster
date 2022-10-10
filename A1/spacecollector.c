@@ -112,10 +112,10 @@ void *enemyBlackhole(parameters *params)
   while (lifepoints > 0)
   {
     usleep(300000);
-    spawnEnemy(ENEMY_BLACKHOLE, params->pos_x_ / 2, params->pos_y_ / 2);
-    spawnEnemy(ENEMY_BLACKHOLE, params->pos_x_ / 2 + 1, params->pos_y_ / 2);
-    spawnEnemy(ENEMY_BLACKHOLE, params->pos_x_ / 2, params->pos_y_ / 2 + 1);
-    spawnEnemy(ENEMY_BLACKHOLE, params->pos_x_ / 2 + 1, params->pos_y_ / 2 + 1);
+    spawnEnemy(params->type_, params->pos_x_ / 2, params->pos_y_ / 2);
+    spawnEnemy(params->type_, params->pos_x_ / 2 + 1, params->pos_y_ / 2);
+    spawnEnemy(params->type_, params->pos_x_ / 2, params->pos_y_ / 2 + 1);
+    spawnEnemy(params->type_, params->pos_x_ / 2 + 1, params->pos_y_ / 2 + 1);
     
   }
   free(params);
