@@ -203,7 +203,7 @@ void init_enemies(unsigned char type, int number_of_enemy_type)
       parameters* alien = malloc(1 * sizeof(parameters));
       alien->pos_x_ = getRandPosX();
       alien->pos_y_ = getRandPosY();
-      alien->type_ = ENEMY_ALIEN;
+      alien->type_ = (unsigned char)ENEMY_ALIEN;
     
       pthread_create(&enemy_alien_tid[0], &enemy_attr, (void* (*)(void*)) enemyAlien, alien);
     }
@@ -215,7 +215,7 @@ void init_enemies(unsigned char type, int number_of_enemy_type)
       parameters* blackhole = malloc(1 * sizeof(parameters));
       blackhole->pos_x_ = getRandPosX();
       blackhole->pos_y_ = getRandPosY();
-      blackhole->type_ = ENEMY_BLACKHOLE;
+      blackhole->type_ = (unsigned char)ENEMY_BLACKHOLE;
     
       pthread_create(&enemy_blackhole_tid[i], &enemy_attr, (void* (*)(void*)) enemyBlackhole, blackhole);
     }
@@ -334,12 +334,11 @@ int main(int argc, char* argv[])
   for(int i = 0; i < NUMBER_BLACKHOLES; i++)
     pthread_join(enemy_blackhole_tid[i], &rvalue_enemies[i]);
 
-  // for(int i = 0; i < NUMBER_ALIENS; i++)
-  // {
-  //   int s = pthread_join(enemy_alien_tid[i], &rvalue_enemies[i + NUMBER_BLACKHOLES]);
-  //   printf("\n %d \n", s);
+  for(int i = 0; i < NUMBER_ALIENS; i++)
+    pthread_join(enemy_alien_tid[i], &rvalue_enemies[i + NUMBER_BLACKHOLES]);
+    
 
-  // }
+
 
   pthread_cancel(crate_tid);
   pthread_join(crate_tid, &rvalue_crates);
