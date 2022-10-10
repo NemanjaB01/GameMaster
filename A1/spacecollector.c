@@ -83,12 +83,12 @@ void *playerLogic()
     // - If the player is on a supply crate, collect it. (Hint: getMapValue, SUPPLY_CRATE)
     // - If the crate was collected, the points should be increased and the crate should disappear. (the crate thread should somehow terminate)
     // - also set crate_collected_flag to 1
-    if(getMapValue(player_position.x_, player_position.y_) == (char)SUPPLY_CRATE)
-    {
-      crate_collected_flag = 1;
-      points += POINTS_CRATE;      
-      pthread_cancel(crate_tid);
-    }
+    // if(getMapValue(player_position.x_, player_position.y_) == (char)SUPPLY_CRATE)
+    // {
+    //   crate_collected_flag = 1;
+    //   points += POINTS_CRATE;      
+    //   pthread_cancel(crate_tid);
+    // }
 
 
     
@@ -112,13 +112,13 @@ void *enemyBlackhole(parameters *params)
   while (lifepoints > 0)
   {
     usleep(300000);
-    spawnEnemy(ENEMY_BLACKHOLE, params->pos_x_ / 2, params->pos_y_ / 2);
-    spawnEnemy(ENEMY_BLACKHOLE, params->pos_x_ / 2 + 1, params->pos_y_ / 2);
-    spawnEnemy(ENEMY_BLACKHOLE, params->pos_x_ / 2, params->pos_y_ / 2 + 1);
-    spawnEnemy(ENEMY_BLACKHOLE, params->pos_x_ / 2 + 1, params->pos_y_ / 2 + 1);
+    spawnEnemy(ENEMY_BLACKHOLE, MAP_WIDTH / 2, MAP_LENGTH  / 2);
+    spawnEnemy(ENEMY_BLACKHOLE, MAP_WIDTH / 2 + 1, MAP_LENGTH  / 2);
+    spawnEnemy(ENEMY_BLACKHOLE, MAP_WIDTH / 2, MAP_LENGTH  / 2 + 1);
+    spawnEnemy(ENEMY_BLACKHOLE, MAP_WIDTH / 2 + 1, MAP_LENGTH  / 2 + 1);
     
   }
-  free(params);
+  //free(params);
 
   // TODO END
 
@@ -137,9 +137,9 @@ void *enemyAlien(parameters *params)
   pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
 
 
-  position enemy_pos = {params->pos_x_ / 2, params->pos_y_ / 2};
-  spawnEnemy((char)ENEMY_ALIEN, params->pos_x_ / 2, params->pos_y_ / 2);
-  free(params);
+  position enemy_pos = {MAP_WIDTH / 2, MAP_LENGTH  / 2};
+  spawnEnemy((char)ENEMY_ALIEN, MAP_WIDTH / 2, MAP_LENGTH  / 2);
+  //free(params);
 
   // TODO END
 
@@ -196,32 +196,32 @@ void init_enemies(unsigned char type, int number_of_enemy_type)
   // - pay attention to not call the getRandPos-functions unnecessary or more often then you need, since this will fail on the testsystem
   // - Furthermore, make sure to keep the lifetime of variables in mind and to not leak any memory!
 
-  pthread_attr_setdetachstate(&enemy_attr, PTHREAD_CREATE_JOINABLE);
+  pthread_attr_setdetachstate(&enemy_attr, PTHREAD_CREATE_DETACHED);
 
-  if(type == (unsigned char)ENEMY_ALIEN)
-  {
-    for(int i = 0; i < NUMBER_ALIENS; i++)
-    {
-      parameters* alien = malloc(1 * sizeof(parameters));
-      alien->pos_x_ = getRandPosX();
-      alien->pos_y_ = getRandPosY();
-      alien->type_ = (unsigned char)ENEMY_ALIEN;
+  // if(type == (unsigned char)ENEMY_ALIEN)
+  // {
+  //   for(int i = 0; i < NUMBER_ALIENS; i++)
+  //   {
+  //     parameters* alien = malloc(1 * sizeof(parameters));
+  //     alien->pos_x_ = getRandPosX();
+  //     alien->pos_y_ = getRandPosY();
+  //     alien->type_ = (unsigned char)ENEMY_ALIEN;
     
-      pthread_create(&enemy_alien_tid[0], &enemy_attr, (void* (*)(void*)) enemyAlien, alien);
-    }
-  }
-  else 
-  {
-    for(int i = 0; i < NUMBER_BLACKHOLES; i++)
-    {
-      parameters* blackhole = malloc(1 * sizeof(parameters));
-      blackhole->pos_x_ = getRandPosX();
-      blackhole->pos_y_ = getRandPosY();
-      blackhole->type_ = (unsigned char)ENEMY_BLACKHOLE;
+  //     pthread_create(&enemy_alien_tid[0], &enemy_attr, (void* (*)(void*)) enemyAlien, alien);
+  //   }
+  // }
+  // else 
+  // {
+  //   for(int i = 0; i < NUMBER_BLACKHOLES; i++)
+  //   {
+  //     parameters* blackhole = malloc(1 * sizeof(parameters));
+  //     blackhole->pos_x_ = getRandPosX();
+  //     blackhole->pos_y_ = getRandPosY();
+  //     blackhole->type_ = (unsigned char)ENEMY_BLACKHOLE;
     
-      pthread_create(&enemy_blackhole_tid[i], &enemy_attr, (void* (*)(void*)) enemyBlackhole, blackhole);
-    }
-  }
+  //     pthread_create(&enemy_blackhole_tid[i], &enemy_attr, (void* (*)(void*)) enemyBlackhole, blackhole);
+  //   }
+  // }
   
 
   // TODO END
@@ -295,11 +295,11 @@ int main(int argc, char* argv[])
   // - have a look at the other TODOs from above - there might be interconnects
   // - Arguments needed? generate them via getRandPosX() and getRandPosY()
   
-  parameters crate;
-  crate.pos_x_ = getRandPosX();
-  crate.pos_y_ = getRandPosY();
-  crate.type_ = (char)SUPPLY_CRATE;
-  pthread_create(&crate_tid, NULL, (void* (*)(void*)) placeCrate, &crate);
+  // parameters crate;
+  // crate.pos_x_ = getRandPosX();
+  // crate.pos_y_ = getRandPosY();
+  // crate.type_ = (char)SUPPLY_CRATE;
+  // pthread_create(&crate_tid, NULL, (void* (*)(void*)) placeCrate, &crate);
 
   // TODO END
 
@@ -310,13 +310,13 @@ int main(int argc, char* argv[])
     if (crate_collected_flag == 1)
     {
       // TODO (8): Further implementations from TODO above
-      pthread_join(crate_tid, &rvalue_crates);      
+      // pthread_join(crate_tid, &rvalue_crates);      
       
-      crate.pos_x_ = getRandPosX();
-      crate.pos_y_ = getRandPosY();
-      pthread_create(&crate_tid, NULL, (void* (*)(void*)) placeCrate, &crate);
+      // crate.pos_x_ = getRandPosX();
+      // crate.pos_y_ = getRandPosY();
+      // pthread_create(&crate_tid, NULL, (void* (*)(void*)) placeCrate, &crate);
       
-      crate_collected_flag = 0;
+      // crate_collected_flag = 0;
 
       // TODO END
     }
@@ -332,18 +332,16 @@ int main(int argc, char* argv[])
   // - we want to make sure, that all threads are terminated for sure. But are all threads even joinable?
   //   Maybe the tutor made a stupid mistake somewhere in the upstream code. Fix it.
 
-  for(int i = 0; i < NUMBER_BLACKHOLES; i++)
-    pthread_join(enemy_blackhole_tid[i], &rvalue_enemies[i]);
+  // for(int i = 0; i < NUMBER_BLACKHOLES; i++)
+  //   pthread_join(enemy_blackhole_tid[i], &rvalue_enemies[i]);
 
-  for(int i = 0; i < NUMBER_ALIENS; i++)
-  {
-    pthread_join(enemy_alien_tid[i], &rvalue_enemies[i + NUMBER_BLACKHOLES]);
-    //printf("%d\n",s);
-  }
-  pthread_cancel(crate_tid);
-  pthread_join(crate_tid, &rvalue_crates);
-  pthread_cancel(player_tid);
-  pthread_join(player_tid, &rvalue_player);
+  // for(int i = 0; i < NUMBER_ALIENS; i++)
+  //   pthread_join(enemy_alien_tid[i], &rvalue_enemies[i + NUMBER_BLACKHOLES]);
+
+  // pthread_cancel(crate_tid);
+  // pthread_join(crate_tid, &rvalue_crates);
+  // pthread_cancel(player_tid);
+  // pthread_join(player_tid, &rvalue_player);
 
    // TODO END
 
