@@ -112,10 +112,10 @@ void *enemyBlackhole(parameters *params)
   while (lifepoints > 0)
   {
     usleep(300000);
-    spawnEnemy(ENEMY_BLACKHOLE, params->pos_y_ / 2, params->pos_x_ / 2);
-    spawnEnemy(ENEMY_BLACKHOLE, params->pos_y_ / 2 + 1, params->pos_x_ / 2);
-    spawnEnemy(ENEMY_BLACKHOLE, params->pos_y_ / 2, params->pos_x_ / 2 + 1);
-    spawnEnemy(ENEMY_BLACKHOLE, params->pos_y_ / 2 + 1, params->pos_x_ / 2 + 1);
+    spawnEnemy(ENEMY_BLACKHOLE, params->pos_x_ / 2, params->pos_y_ / 2);
+    spawnEnemy(ENEMY_BLACKHOLE, params->pos_x_ / 2 + 1, params->pos_y_ / 2);
+    spawnEnemy(ENEMY_BLACKHOLE, params->pos_x_ / 2, params->pos_y_ / 2 + 1);
+    spawnEnemy(ENEMY_BLACKHOLE, params->pos_x_ / 2 + 1, params->pos_y_ / 2 + 1);
     
   }
   free(params);
@@ -138,7 +138,7 @@ void *enemyAlien(parameters *params)
 
 
   position enemy_pos = {params->pos_x_ / 2, params->pos_y_ / 2};
-  spawnEnemy(ENEMY_ALIEN, params->pos_x_ / 2, params->pos_y_ / 2);
+  spawnEnemy((char)ENEMY_ALIEN, params->pos_x_ / 2, params->pos_y_ / 2);
   free(params);
 
   // TODO END
@@ -196,6 +196,8 @@ void init_enemies(unsigned char type, int number_of_enemy_type)
   // - pay attention to not call the getRandPos-functions unnecessary or more often then you need, since this will fail on the testsystem
   // - Furthermore, make sure to keep the lifetime of variables in mind and to not leak any memory!
 
+  pthread_attr_setdetachstate(&enemy_attr, PTHREAD_CREATE_JOINABLE);
+
   if(type == (unsigned char)ENEMY_ALIEN)
   {
     for(int i = 0; i < NUMBER_ALIENS; i++)
@@ -220,8 +222,6 @@ void init_enemies(unsigned char type, int number_of_enemy_type)
       pthread_create(&enemy_blackhole_tid[i], &enemy_attr, (void* (*)(void*)) enemyBlackhole, blackhole);
     }
   }
-  pthread_attr_setdetachstate(&enemy_attr, PTHREAD_CREATE_DETACHED);
-
   
 
   // TODO END
@@ -278,8 +278,8 @@ int main(int argc, char* argv[])
 
   pthread_create(&player_tid, NULL, (void* (*)(void*))playerLogic, NULL);
 
-  init_enemies((char) ENEMY_ALIEN, ENEMY_ALIEN);
-  init_enemies((char) ENEMY_BLACKHOLE, ENEMY_BLACKHOLE);
+  init_enemies((unsigned char) ENEMY_ALIEN, (int)ENEMY_ALIEN);
+  init_enemies((unsigned char) ENEMY_BLACKHOLE,(int) ENEMY_BLACKHOLE);
 
 
   // TODO END
@@ -331,15 +331,15 @@ int main(int argc, char* argv[])
   // - have a closer look on the other TODOs. There might be some connections
   // - we want to make sure, that all threads are terminated for sure. But are all threads even joinable?
   //   Maybe the tutor made a stupid mistake somewhere in the upstream code. Fix it.
+
   for(int i = 0; i < NUMBER_BLACKHOLES; i++)
     pthread_join(enemy_blackhole_tid[i], &rvalue_enemies[i]);
 
   for(int i = 0; i < NUMBER_ALIENS; i++)
+  {
     pthread_join(enemy_alien_tid[i], &rvalue_enemies[i + NUMBER_BLACKHOLES]);
-    
-
-
-
+    //printf("%d\n",s);
+  }
   pthread_cancel(crate_tid);
   pthread_join(crate_tid, &rvalue_crates);
   pthread_cancel(player_tid);
