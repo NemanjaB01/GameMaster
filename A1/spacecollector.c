@@ -276,10 +276,10 @@ int main(int argc, char* argv[])
   // - Generate NUMBER_BLACKHOLES blackholes and NUMBER_ALIENS aliens enemies
   // - Make sure to generate all aliens first, then all blackholes
 
-  pthread_create(&player_tid, NULL, (void* (*)(void*))playerLogic, NULL);
+  // pthread_create(&player_tid, NULL, (void* (*)(void*))playerLogic, NULL);
 
-  init_enemies((unsigned char) ENEMY_ALIEN, (int)ENEMY_ALIEN);
-  init_enemies((unsigned char) ENEMY_BLACKHOLE,(int) ENEMY_BLACKHOLE);
+  // init_enemies((unsigned char) ENEMY_ALIEN, (int)ENEMY_ALIEN);
+  // init_enemies((unsigned char) ENEMY_BLACKHOLE,(int) ENEMY_BLACKHOLE);
 
 
   // TODO END
