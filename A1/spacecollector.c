@@ -334,21 +334,12 @@ int main(int argc, char* argv[])
   for(int i = 0; i < NUMBER_BLACKHOLES; i++)
     pthread_join(enemy_blackhole_tid[i], &rvalue_enemies[i]);
 
-<<<<<<< HEAD
   // for(int i = 0; i < NUMBER_ALIENS; i++)
   // {
   //   int s = pthread_join(enemy_alien_tid[i], &rvalue_enemies[i + NUMBER_BLACKHOLES]);
   //   printf("\n %d \n", s);
 
   // }
-=======
-  for(int i = 0; i < NUMBER_ALIENS; i++)
-  {
-    int s = pthread_join(enemy_alien_tid[i], &rvalue_enemies[i + NUMBER_BLACKHOLES]);
-    printf("\n %d \n", s);
-
-  }
->>>>>>> b19eddf856ddc790d5cb6a087a1ff18deaedbf93
 
   pthread_cancel(crate_tid);
   pthread_join(crate_tid, &rvalue_crates);
