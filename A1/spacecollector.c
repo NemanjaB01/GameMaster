@@ -112,10 +112,10 @@ void *enemyBlackhole(parameters *params)
   while (lifepoints > 0)
   {
     usleep(300000);
-    spawnEnemy(params->type_, params->pos_x_ / 2, params->pos_y_ / 2);
-    spawnEnemy(params->type_, params->pos_x_ / 2 + 1, params->pos_y_ / 2);
-    spawnEnemy(params->type_, params->pos_x_ / 2, params->pos_y_ / 2 + 1);
-    spawnEnemy(params->type_, params->pos_x_ / 2 + 1, params->pos_y_ / 2 + 1);
+    spawnEnemy(params->type_, params->pos_x_, params->pos_y_);
+    spawnEnemy(params->type_, params->pos_x_  + 1, params->pos_y_ );
+    spawnEnemy(params->type_, params->pos_x_ , params->pos_y_  + 1);
+    spawnEnemy(params->type_, params->pos_x_  + 1, params->pos_y_  + 1);
     
   }
   free(params);
@@ -134,9 +134,9 @@ void *enemyAlien(parameters *params)
   // -) set the alien position correctly
   // -) spawn the enemy alien correctly in the map
 
-  position enemy_pos = {params->pos_x_ / 2, params->pos_y_ / 2};
-  spawnEnemy(params->type_, params->pos_x_ / 2, params->pos_y_ / 2);
-  //free(params);
+  position enemy_pos = {params->pos_x_ , params->pos_y_ };
+  spawnEnemy(params->type_, params->pos_x_ , params->pos_y_ );
+  free(params);
 
   // TODO END
 
