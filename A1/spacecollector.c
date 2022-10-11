@@ -25,7 +25,7 @@ int points = 0;
 
 int crate_collected_flag = 0;
 
-bool autoplay_enabled = false;
+bool autoplay_enabled = true;
 
 void *playerLogic()
 {
@@ -73,8 +73,17 @@ void *playerLogic()
       // The player should collect crates automatically
       // It is sufficient enough that you don't have to evade enemies. 
       // You can *temporarily* test this behaviour by setting NUMBER_ALIENS and NUMBER_BLACKHOLES to 0. 
-      // Make sure to not commit any changes to the header files!
-
+      // Make sure to not commit any changes to the header files!i
+  
+      if(crate_position.x_ < player_position.x_)
+        direction = 'l';
+      else if(crate_position.x_ > player_position.x_ )
+          direction = 'r';
+      else if(crate_position.y_ > player_position.y_)
+        direction = 'd';
+      else if(crate_position.y_ < player_position.y_)
+          direction = 'u';
+      
 
     
       // TODO END
