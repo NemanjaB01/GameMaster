@@ -6,6 +6,7 @@
 #include "spacecollector.h"
 #include <pthread.h>
 #include <stdbool.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -269,13 +270,13 @@ int main(int argc, char* argv[])
   void *rvalue_player = 0;
   void *rvalue_enemies[NUMBER_BLACKHOLES + NUMBER_ALIENS];
   void *rvalue_crates = 0;
-  if(strcmp(argv[1], "bonus") == 0)
-    autoplay_enabled = true;
 
   init_map();
   srand((unsigned int)time(&time1));
 
   // TODO (10): If you want to do the bonus, simply check if the program has been started with the argument "bonus" and if so, set the autoplay variable
+  if(strcmp(argv[argc - 1], "bonus") == 0)
+    autoplay_enabled = true;
   // TODO END
 
   // TODO (1):
