@@ -79,13 +79,21 @@ void *playerLogic()
       // Make sure to not commit any changes to the header files!i
   
       if(crate_position.x_ < player_position.x_)
+      {
         direction = 'l';
+      }
       else if(crate_position.x_ > player_position.x_ )
-          direction = 'r';
+      {
+        direction = 'r';
+      }
       else if(crate_position.y_ > player_position.y_)
+      {
         direction = 'd';
+      }
       else if(crate_position.y_ < player_position.y_)
-          direction = 'u';
+      {
+        direction = 'u';
+      }
       
 
     
@@ -275,7 +283,7 @@ int main(int argc, char* argv[])
   srand((unsigned int)time(&time1));
 
   // TODO (10): If you want to do the bonus, simply check if the program has been started with the argument "bonus" and if so, set the autoplay variable
-  if(strcmp(argv[argc - 1], "bonus") == 0)
+  if(argc == 2)
     autoplay_enabled = true;
   // TODO END
 
