@@ -269,7 +269,7 @@ int main(int argc, char* argv[])
   void *rvalue_player = 0;
   void *rvalue_enemies[NUMBER_BLACKHOLES + NUMBER_ALIENS];
   void *rvalue_crates = 0;
-  if(strcmp(argv[0], "bonus") == 0)
+  if(strcmp(argv[1], "bonus") == 0)
     autoplay_enabled = true;
 
   init_map();
