@@ -5,7 +5,9 @@
 
 #include "spacecollector.h"
 #include <pthread.h>
+#include <stdbool.h>
 #include <stdlib.h>
+#include <string.h>
 
 WINDOW *game_window;
 char game_map[MAP_LENGTH][MAP_WIDTH];
@@ -25,7 +27,7 @@ int points = 0;
 
 int crate_collected_flag = 0;
 
-bool autoplay_enabled = true;
+bool autoplay_enabled = false;
 
 void *playerLogic()
 {
@@ -267,6 +269,8 @@ int main(int argc, char* argv[])
   void *rvalue_player = 0;
   void *rvalue_enemies[NUMBER_BLACKHOLES + NUMBER_ALIENS];
   void *rvalue_crates = 0;
+  if(strcmp(argv[0], "bonus") == 0)
+    autoplay_enabled = true;
 
   init_map();
   srand((unsigned int)time(&time1));
