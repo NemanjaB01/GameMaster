@@ -27,6 +27,11 @@ bool carwash_opened = false;
  * STUDENT TODO BEGIN:
  *  locking-related global variables may be declared here
  */
+ sem_t vacuum_station_semaphore;
+ sem_t available_wash_bays;
+ pthread_cond_t opening_carwash_cond;
+ pthread_mutex_t wash_bay_mutex;
+
 
 /*
  * STUDENT TODO END:
@@ -40,6 +45,7 @@ bool carwash_opened = false;
  */
 void goToTheVacuumStation(Customer* customer) 
 {
+  sem_wait(&vacuum_station_semaphore);
   printf("Customer %zd goes to the vacuum station...\n", customer->id);
 
   int i = 0;
@@ -56,7 +62,9 @@ void goToTheVacuumStation(Customer* customer)
   
   vacuum_stations[i] = 0;
 
-  printf("Customer %zd left vacuum station...\n", customer->id);
+  printf("Customer %zd left vacuum station...\n", customer->id);  
+  sem_post(&vacuum_station_semaphore);
+
 }
 
 // ------------------------------------------------------------------------
@@ -69,7 +77,14 @@ void goToTheVacuumStation(Customer* customer)
  */
 WashBay* driveIntoTheWashBay(Customer* customer) 
 {
+  pthread_mutex_lock(&wash_bay_mutex);
+  while(carwash_opened == false)
+  {
+    pthread_cond_wait(&opening_carwash_cond, &wash_bay_mutex);
+  }
+  pthread_mutex_unlock(&wash_bay_mutex);
 
+  sem_wait(&available_wash_bays);
   printf("Customer %zd is looking for a free wash bay.\n", customer->id);
 
   WashBay* free_wash_bay = 0;
@@ -96,7 +111,9 @@ WashBay* driveIntoTheWashBay(Customer* customer)
 
   if (free_wash_bay) 
   {
+    pthread_mutex_lock(&wash_bay_mutex);
     vector_erase(&free_wash_bays, wash_bay_it);
+    pthread_mutex_unlock(&wash_bay_mutex);
     printf("Customer %zd found a free wash bay %zd\n", customer->id, free_wash_bay->id);
   }
   
@@ -105,7 +122,9 @@ WashBay* driveIntoTheWashBay(Customer* customer)
     printf("Customer %zd tries to drive into a used wash bay :o\n", customer->id);
   }
 
+  pthread_mutex_lock(&free_wash_bay->washing_bay_private_mutex);
   free_wash_bay->current_customer = customer;
+  pthread_mutex_unlock(&free_wash_bay->washing_bay_private_mutex);
 
   return free_wash_bay;
 }
@@ -119,6 +138,12 @@ WashBay* driveIntoTheWashBay(Customer* customer)
  */
 void leaveTheWashBay(Customer* customer, WashBay* wash_bay) 
 {
+  pthread_mutex_lock(&wash_bay->washing_bay_private_mutex);
+  while(wash_bay->current_customer != customer)
+  {
+    pthread_cond_wait(&wash_bay->washing_finished_cond, &wash_bay->washing_bay_private_mutex);
+  }
+
   if(wash_bay->current_customer != customer)
   {
     printf("Customer %zd didn't find his car in the wash bay :o.\n", customer->id);
@@ -134,6 +159,8 @@ void leaveTheWashBay(Customer* customer, WashBay* wash_bay)
   }
   
   printf("Customer %zd leaves the wash bay...\n", customer->id);
+  pthread_mutex_unlock(&wash_bay->washing_bay_private_mutex);
+  pthread_cond_signal(&wash_bay->auto_clean_cond);
 }
 
 // ------------------------------------------------------------------------
@@ -144,8 +171,11 @@ void leaveTheWashBay(Customer* customer, WashBay* wash_bay)
  */
 void selectAWashingProgram(WashBay* wash_bay, Customer* customer)
 {
+  pthread_mutex_lock(&wash_bay->washing_bay_private_mutex);
   wash_bay->mode = WASHING_ON;
   printf("Customer %zd selected a washing program and can have a coffee break now.\n", customer->id);
+  pthread_mutex_unlock(&wash_bay->washing_bay_private_mutex);
+  pthread_cond_signal(&wash_bay->washing_program_selected);
 }
 
 // ------------------------------------------------------------------------
@@ -166,8 +196,10 @@ void* takeABreakAtCarWashPark(Customer* customer)
  */
 void maintainingWashBay(WashBay* wash_bay) 
 {
+  pthread_mutex_lock(&wash_bay->washing_bay_private_mutex);
   washBayMaintenance();
   wash_bay->mode = WASHING_OFF;
+  pthread_mutex_unlock(&wash_bay->washing_bay_private_mutex);
 }
 
 // ------------------------------------------------------------------------
@@ -178,8 +210,16 @@ void maintainingWashBay(WashBay* wash_bay)
  */
 void* checkWashBays(Employee* employee) 
 {
+  pthread_mutex_lock(&wash_bay_mutex);
+  while(carwash_opened == false)
+  {
+    pthread_cond_wait(&opening_carwash_cond, &wash_bay_mutex);
+  }
+  pthread_mutex_unlock(&wash_bay_mutex);
+
   while (1) 
   {
+    pthread_mutex_lock(&wash_bay_mutex);
     printf("Employee %zd is checking wash bays...\n", employee->id);
 
     WashBay* wash_bay = 0;
@@ -194,6 +234,7 @@ void* checkWashBays(Employee* employee)
       {
         wash_bay = *it;
         vector_erase(&free_wash_bays, it);
+        
         break;
       }
     }
@@ -201,13 +242,15 @@ void* checkWashBays(Employee* employee)
     if (!wash_bay) 
     {
       printf("Employee %zd has nothing to do...\n", employee->id);
+      pthread_mutex_unlock(&wash_bay_mutex);
       coffeeTime();
       continue;
     }
   
     maintainingWashBay(wash_bay);
- 
     vector_push_back(&free_wash_bays, wash_bay);
+    pthread_mutex_unlock(&wash_bay_mutex);
+    sem_post(&available_wash_bays);
   }
 }
 
@@ -222,12 +265,24 @@ void* checkWashBays(Employee* employee)
  */
 void automaticWashing(WashBay* wash_bay) 
 {
+  pthread_mutex_lock(&wash_bay_mutex);
+  while(carwash_opened == false)
+  {
+    pthread_cond_wait(&opening_carwash_cond, &wash_bay_mutex);
+  }
+  pthread_mutex_unlock(&wash_bay_mutex);
   while(1)
   {
     printf("WashBay %zd : waiting for new customers.\n", wash_bay->id);
     
+    pthread_mutex_lock(&wash_bay->washing_bay_private_mutex);
+    while((wash_bay->mode != WASHING_ON) && (wash_bay->mode != CLOSED))
+    {
+      pthread_cond_wait(&wash_bay->washing_program_selected , &wash_bay->washing_bay_private_mutex);
+    }
     if(wash_bay->mode == CLOSED)
     {
+      pthread_mutex_unlock(&wash_bay->washing_bay_private_mutex);
       break;
     }
 
@@ -238,22 +293,34 @@ void automaticWashing(WashBay* wash_bay)
 
     printf("WashBay %zd : washing car of customer %zd.\n", 
             wash_bay->id, wash_bay->current_customer->id);
-
     washTheCar(); 
 
     printf("WashBay %zd : the car of customer %zd washed, can be picked up.\n", 
             wash_bay->id, wash_bay->current_customer->id);
+    pthread_mutex_unlock(&wash_bay->washing_bay_private_mutex);
+    pthread_cond_signal(&wash_bay->washing_finished_cond);
 
+
+    pthread_mutex_lock(&wash_bay->washing_bay_private_mutex);
+    while(wash_bay->mode == WASHING_ON)
+    {
+      pthread_cond_wait(&wash_bay->auto_clean_cond, &wash_bay->washing_bay_private_mutex);
+    }
     wash_bay->current_customer = 0;
-
     automizedCleaning();
+    pthread_mutex_unlock(&wash_bay->washing_bay_private_mutex);
+
     
+    pthread_mutex_lock(&wash_bay_mutex);
     vector_push_back(&free_wash_bays, wash_bay);
+    pthread_mutex_unlock(&wash_bay_mutex);
 
     if(wash_bay->mode != NEEDS_MAINTENANCE)
     {
       printf("WashBay %zd is ready for new customers.\n", wash_bay->id);
+      sem_post(&available_wash_bays);
     }
+    
 
     count_washed_cars++;
   }
@@ -267,8 +334,11 @@ void automaticWashing(WashBay* wash_bay)
  */
 void openCarWashPark()
 {
+  pthread_mutex_lock(&wash_bay_mutex);
   carwash_opened = true;
   printf("CAR WASH PARK OPENED!\n");
+  pthread_mutex_unlock(&wash_bay_mutex);
+  pthread_cond_broadcast(&opening_carwash_cond);
 }
 
 // ------------------------------------------------------------------------
@@ -304,6 +374,11 @@ int main(int argc, char* argv[])
     fprintf(stderr, "Could not allocate memory!\n");
     exit(-1);
   }
+
+  sem_init(&vacuum_station_semaphore, 0, NUM_VACUUM_STATIONS);
+  sem_init(&available_wash_bays, 0 , num_wash_bays);
+  pthread_mutex_init(&wash_bay_mutex, 0);
+  pthread_cond_init(&opening_carwash_cond, 0);
   
   // handle free_wash_bays vector
   vector_init(&free_wash_bays);
@@ -319,6 +394,10 @@ int main(int argc, char* argv[])
       fprintf(stderr, "Could not allocate memory!\n");
       exit(-1);
     }
+    pthread_cond_init(&wash_bay->washing_finished_cond, 0);
+    pthread_cond_init(&wash_bay->auto_clean_cond, 0);
+    pthread_cond_init(&wash_bay->washing_program_selected, 0);
+    pthread_mutex_init(&wash_bay->washing_bay_private_mutex, 0);
 
     wash_bay->mode = WASHING_OFF;
     wash_bay->id = i;
@@ -353,6 +432,7 @@ int main(int argc, char* argv[])
   pthread_t mystic_employee;
   assert(!pthread_create(&mystic_employee, NULL, 
               (void*(*)(void*))&openCarWashPark, NULL));
+              
   
   for (ssize_t i = 0; i < num_customers; i++) 
   {
@@ -367,7 +447,14 @@ int main(int argc, char* argv[])
 
   for(size_t i = 0; i < num_wash_bays; ++i)
   {
+    pthread_mutex_lock(&wash_bays[i]->washing_bay_private_mutex);
     wash_bays[i]->mode = CLOSED;
+    pthread_mutex_unlock(&wash_bays[i]->washing_bay_private_mutex);
+    pthread_cond_signal(&wash_bays[i]->washing_program_selected);
+    pthread_mutex_destroy(&wash_bays[i]->washing_bay_private_mutex);
+    pthread_cond_destroy(&wash_bays[i]->washing_finished_cond);
+    pthread_cond_destroy(&wash_bays[i]->auto_clean_cond);
+    pthread_cond_destroy(&wash_bays[i]->washing_program_selected);
     pthread_join(wash_bays[i]->wash_bay, NULL);
   }
 
@@ -385,6 +472,10 @@ int main(int argc, char* argv[])
     vector_erase(&free_wash_bays, it);
   }
   vector_destroy(&free_wash_bays);
+  sem_destroy(&vacuum_station_semaphore);
+  sem_destroy(&available_wash_bays);
+  pthread_cond_destroy(&opening_carwash_cond);
+  pthread_mutex_destroy(&wash_bay_mutex);
 
   return 0;
 }
