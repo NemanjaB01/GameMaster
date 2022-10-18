@@ -219,7 +219,6 @@ void* checkWashBays(Employee* employee)
 
   while (1) 
   {
-    pthread_mutex_lock(&wash_bay_mutex);
     printf("Employee %zd is checking wash bays...\n", employee->id);
 
     WashBay* wash_bay = 0;
@@ -232,22 +231,23 @@ void* checkWashBays(Employee* employee)
 
       if (tmp->mode == NEEDS_MAINTENANCE) 
       {
+        pthread_mutex_lock(&wash_bay_mutex);
         wash_bay = *it;
         vector_erase(&free_wash_bays, it);
-        
+        pthread_mutex_unlock(&wash_bay_mutex);
         break;
       }
     }
-
     if (!wash_bay) 
     {
       printf("Employee %zd has nothing to do...\n", employee->id);
-      pthread_mutex_unlock(&wash_bay_mutex);
+
       coffeeTime();
       continue;
     }
   
     maintainingWashBay(wash_bay);
+    pthread_mutex_lock(&wash_bay_mutex);
     vector_push_back(&free_wash_bays, wash_bay);
     pthread_mutex_unlock(&wash_bay_mutex);
     sem_post(&available_wash_bays);
