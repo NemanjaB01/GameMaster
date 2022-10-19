@@ -1,3 +1,0 @@
-/home/nemanja/Desktop/SLP/slpw22g203/A2/build/CMakeFiles/rebuild_cache.dir
-/home/nemanja/Desktop/SLP/slpw22g203/A2/build/CMakeFiles/edit_cache.dir
-/home/nemanja/Desktop/SLP/slpw22g203/A2/build/CMakeFiles/carwash.dir

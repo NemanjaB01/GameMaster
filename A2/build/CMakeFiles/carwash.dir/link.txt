@@ -1,1 +1,0 @@
-/usr/bin/cc    CMakeFiles/carwash.dir/vector.c.o CMakeFiles/carwash.dir/carwash.c.o  -o carwash  -lpthread 
