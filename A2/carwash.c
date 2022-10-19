@@ -62,9 +62,7 @@ void goToTheVacuumStation(Customer* customer)
   vacuum_stations[i] = 0;
 
   printf("Customer %zd left vacuum station...\n", customer->id);  
-  pthread_mutex_lock(&wash_bay_mutex);
   sem_post(&vacuum_station_semaphore);
-  pthread_mutex_unlock(&wash_bay_mutex);
 
 }
 
@@ -235,18 +233,18 @@ void* checkWashBays(Employee* employee)
         break;
       }
     }
+    pthread_mutex_unlock(&wash_bay_mutex);
     if (!wash_bay) 
     {
       printf("Employee %zd has nothing to do...\n", employee->id);
-      pthread_mutex_unlock(&wash_bay_mutex);
       coffeeTime();
       continue;
     }
-  
     maintainingWashBay(wash_bay);
+    pthread_mutex_lock(&wash_bay_mutex);
     vector_push_back(&free_wash_bays, wash_bay);
-    sem_post(&available_wash_bays);
     pthread_mutex_unlock(&wash_bay_mutex);
+    sem_post(&available_wash_bays);
   }
 }
 
@@ -276,9 +274,9 @@ void automaticWashing(WashBay* wash_bay)
     {
       pthread_cond_wait(&wash_bay->washing_program_selected , &wash_bay->washing_bay_private_mutex);
     }
-    pthread_mutex_unlock(&wash_bay->washing_bay_private_mutex);
     if(wash_bay->mode == CLOSED)
     {
+      pthread_mutex_unlock(&wash_bay->washing_bay_private_mutex);
       break;
     }
 
@@ -286,7 +284,7 @@ void automaticWashing(WashBay* wash_bay)
     {
       printf("WashBay %zd : washing before wash program selected.\n", wash_bay->id); 
     }
-    pthread_mutex_lock(&wash_bay->washing_bay_private_mutex);
+    //pthread_mutex_lock(&wash_bay->washing_bay_private_mutex);
     printf("WashBay %zd : washing car of customer %zd.\n", 
             wash_bay->id, wash_bay->current_customer->id);
     washTheCar(); 
@@ -309,12 +307,14 @@ void automaticWashing(WashBay* wash_bay)
     
     pthread_mutex_lock(&wash_bay_mutex);
     vector_push_back(&free_wash_bays, wash_bay);
+    pthread_mutex_unlock(&wash_bay_mutex);
 
     if(wash_bay->mode != NEEDS_MAINTENANCE)
     {
       printf("WashBay %zd is ready for new customers.\n", wash_bay->id);
       sem_post(&available_wash_bays);
     }
+    pthread_mutex_lock(&wash_bay_mutex);
     count_washed_cars++;
     pthread_mutex_unlock(&wash_bay_mutex);
   }
