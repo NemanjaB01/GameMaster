@@ -4,6 +4,7 @@
 #include "pthread.h"
 #include "stdint.h"
 #include "stdlib.h"
+#include <semaphore.h>
 
 /* STUDENT TODO:
  *  make sure shared resources are locked correctly
