@@ -220,6 +220,7 @@ void* checkWashBays(Employee* employee)
     pthread_cond_wait(&opening_carwash_cond, &car_wash_opened_mutex);
   }
   pthread_mutex_unlock(&car_wash_opened_mutex);
+  
 
   while (1) 
   {
