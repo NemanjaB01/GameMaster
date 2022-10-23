@@ -308,7 +308,6 @@ void automaticWashing(WashBay* wash_bay)
     }
     wash_bay->current_customer = 0;
     automizedCleaning();
-    pthread_mutex_unlock(&wash_bay->washing_bay_private_mutex);
 
     
     pthread_mutex_lock(&wash_bay_mutex);
@@ -324,8 +323,9 @@ void automaticWashing(WashBay* wash_bay)
     pthread_mutex_lock(&counting_mutex);
     count_washed_cars++;
     pthread_mutex_unlock(&counting_mutex);
+    pthread_mutex_unlock(&wash_bay->washing_bay_private_mutex);
   }
-}
+} 
 
 // ------------------------------------------------------------------------
 /* STUDENT TODO:
@@ -465,7 +465,6 @@ int main(int argc, char* argv[])
   pthread_join(mystic_employee, NULL);
 
   printf("CAR WASH PARK CLOSED!\n");
-
   free(employees);
   free(customers);
   
