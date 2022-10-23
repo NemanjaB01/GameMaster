@@ -220,7 +220,7 @@ void* checkWashBays(Employee* employee)
     pthread_cond_wait(&opening_carwash_cond, &car_wash_opened_mutex);
   }
   pthread_mutex_unlock(&car_wash_opened_mutex);
-  
+
 
   while (1) 
   {
@@ -252,8 +252,8 @@ void* checkWashBays(Employee* employee)
     maintainingWashBay(wash_bay);
     pthread_mutex_lock(&wash_bay_mutex);
     vector_push_back(&free_wash_bays, wash_bay);
-    sem_post(&available_wash_bays);
     pthread_mutex_unlock(&wash_bay_mutex);
+    sem_post(&available_wash_bays);
   }
 }
 
@@ -319,13 +319,11 @@ void automaticWashing(WashBay* wash_bay)
     vector_push_back(&free_wash_bays, wash_bay);
   
 
-    pthread_mutex_lock(&wash_bay->washing_bay_private_mutex);
     if(wash_bay->mode != NEEDS_MAINTENANCE)
     {
       printf("WashBay %zd is ready for new customers.\n", wash_bay->id);
     }
     pthread_mutex_unlock(&wash_bay->washing_bay_private_mutex);
-    pthread_mutex_unlock(&wash_bay_mutex);
   
     pthread_mutex_lock(&counting_mutex);
     count_washed_cars++;
