@@ -319,11 +319,13 @@ void automaticWashing(WashBay* wash_bay)
     vector_push_back(&free_wash_bays, wash_bay);
   
 
+    pthread_mutex_lock(&wash_bay->washing_bay_private_mutex);
     if(wash_bay->mode != NEEDS_MAINTENANCE)
     {
       printf("WashBay %zd is ready for new customers.\n", wash_bay->id);
     }
     pthread_mutex_unlock(&wash_bay->washing_bay_private_mutex);
+    pthread_mutex_unlock(&wash_bay_mutex);
   
     pthread_mutex_lock(&counting_mutex);
     count_washed_cars++;
@@ -470,7 +472,6 @@ int main(int argc, char* argv[])
   pthread_join(mystic_employee, NULL);
 
   printf("CAR WASH PARK CLOSED!\n");
-  printf("%d",count_washed_cars);
   free(employees);
   free(customers);
   
