@@ -465,10 +465,10 @@ int main(int argc, char* argv[])
     pthread_mutex_unlock(&wash_bays[i]->washing_bay_private_mutex);
     pthread_cond_signal(&wash_bays[i]->washing_program_selected);
     pthread_join(wash_bays[i]->wash_bay, NULL);
-    pthread_cond_destroy(&wash_bays[i]->washing_finished_cond);
-    pthread_cond_destroy(&wash_bays[i]->auto_clean_cond);
-    pthread_cond_destroy(&wash_bays[i]->washing_program_selected);
-    pthread_mutex_destroy(&wash_bays[i]->washing_bay_private_mutex);
+    // pthread_cond_destroy(&wash_bays[i]->washing_finished_cond);
+    // pthread_cond_destroy(&wash_bays[i]->auto_clean_cond);
+    // pthread_cond_destroy(&wash_bays[i]->washing_program_selected);
+    // pthread_mutex_destroy(&wash_bays[i]->washing_bay_private_mutex);
 
   }
 
