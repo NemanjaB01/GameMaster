@@ -102,12 +102,14 @@ WashBay* driveIntoTheWashBay(Customer* customer)
   for (; it != it_end; ++it) 
   {
     WashBay* tmp = *it;
-
+    pthread_mutex_lock(&tmp->washing_bay_private_mutex);
     if (tmp->mode != NEEDS_MAINTENANCE)  
     {
       wash_bay_it = it;
+      pthread_mutex_unlock(&tmp->washing_bay_private_mutex);
       break;
     }
+    pthread_mutex_unlock(&tmp->washing_bay_private_mutex);
   }
 
   driveIn();
@@ -312,20 +314,21 @@ void automaticWashing(WashBay* wash_bay)
     automizedCleaning();
     pthread_mutex_unlock(&wash_bay->washing_bay_private_mutex);
 
-    
     pthread_mutex_lock(&wash_bay_mutex);
+    pthread_mutex_lock(&wash_bay->washing_bay_private_mutex);
     if(wash_bay->mode == WASHING_OFF)
       sem_post(&available_wash_bays);
+    pthread_mutex_unlock(&wash_bay->washing_bay_private_mutex);
+    
     vector_push_back(&free_wash_bays, wash_bay);
+    pthread_mutex_unlock(&wash_bay_mutex);
   
-
     pthread_mutex_lock(&wash_bay->washing_bay_private_mutex);
     if(wash_bay->mode != NEEDS_MAINTENANCE)
     {
       printf("WashBay %zd is ready for new customers.\n", wash_bay->id);
     }
     pthread_mutex_unlock(&wash_bay->washing_bay_private_mutex);
-    pthread_mutex_unlock(&wash_bay_mutex);
   
     pthread_mutex_lock(&counting_mutex);
     count_washed_cars++;
