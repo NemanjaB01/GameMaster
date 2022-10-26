@@ -4,6 +4,7 @@
 #include "pthread.h"
 #include "stdint.h"
 #include "stdlib.h"
+#include <semaphore.h>
 
 /* STUDENT TODO:
  *  make sure shared resources are locked correctly
@@ -26,10 +27,10 @@ typedef struct{
   pthread_t wash_bay;
   ssize_t id;
 
-  pthread_cond_t washing_finished_cond;
   pthread_cond_t washing_program_selected;
-  pthread_cond_t auto_clean_cond;
   pthread_mutex_t washing_bay_private_mutex;
+  sem_t washing_done;
+  sem_t cleaning_begin;
 
   Mode mode;
 
