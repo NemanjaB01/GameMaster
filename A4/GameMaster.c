@@ -188,7 +188,11 @@ char *cmdHandler(shmrequest *request)
       return messages[6];
     }
     else
-     return messages[7];;
+    {
+      clearPuzzle();
+      mmaps.mapped_region_game_state_->game_active = 0;
+      return messages[7];
+    }
   }
 
   if(strcmp(request->message, CMD_QUIT) == 0)
