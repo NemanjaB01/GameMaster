@@ -33,7 +33,11 @@ int startGameMaster()
   do
   {
     // TODO Student START
-    
+  
+    sem_wait(&mmaps.mapped_region_locks_->request_sem);
+    char* response = cmdHandler(mmaps.mapped_region_request_);
+    strcpy(mmaps.mapped_region_response_->message, response);
+    sem_post(&mmaps.mapped_region_locks_->response_sem);    
     // TODO Student END
 
   } while (strcmp(mmaps.mapped_region_request_->message, CMD_EXIT) != 0);
@@ -56,7 +60,15 @@ int startGameMaster()
 void initSharedMemoriesGameMaster()
 {
   // TODO Student START
-  
+  fds.fd_shm_request_ = shm_open(SHM_NAME_REQUEST, FLAGS_SHM_READONLY, MODERW);
+
+  fds.fd_shm_game_state_ = shm_open(SHM_NAME_GAMESTATE, FLAGS_SHM_READWRITE, MODERW);
+  ftruncate(fds.fd_shm_game_state_, sizeof(shmgamestate));
+
+  fds.fd_shm_response_ = shm_open(SHM_NAME_RESPONSE, FLAGS_SHM_READWRITE, MODERW);
+  ftruncate(fds.fd_shm_response_, sizeof(shmresponse));
+
+  fds.fd_shm_locks_ = shm_open(SHM_NAME_LOCKS, FLAGS_SHM_READWRITE, MODERW);
   // TODO Student END
 }
 
@@ -75,7 +87,14 @@ void initMmapingsGameMaster()
   }
 
   // TODO Student START
-  
+  mmaps.mapped_region_request_ = mmap(NULL, sizeof(shmrequest), PROT_READ, MAP_SHARED, fds.fd_shm_request_, 0);
+  close(fds.fd_shm_request_);
+  mmaps.mapped_region_game_state_ = mmap(NULL, sizeof(shmgamestate), PROT_READ | PROT_WRITE, MAP_SHARED,fds.fd_shm_game_state_, 0);
+  close(fds.fd_shm_game_state_);
+  mmaps.mapped_region_response_ = mmap(NULL, sizeof(shmresponse), PROT_READ | PROT_WRITE, MAP_SHARED,fds.fd_shm_response_, 0);
+  close(fds.fd_shm_response_);
+  mmaps.mapped_region_locks_ = mmap(NULL, sizeof(shmlocks) , PROT_READ | PROT_WRITE, MAP_SHARED, fds.fd_shm_locks_, 0);
+  close(fds.fd_shm_locks_);  
   // TODO Student END
 }
 
@@ -96,6 +115,12 @@ void closeMmapingsGameMaster()
   }
 
   // TODO Student START
+  munmap(mmaps.mapped_region_game_state_, sizeof(shmgamestate));
+  munmap(mmaps.mapped_region_response_, sizeof(shmresponse));
+  munmap(mmaps.mapped_region_locks_, sizeof(shmlocks));
+  munmap(mmaps.mapped_region_request_, sizeof(shmrequest));
+  shm_unlink(SHM_NAME_RESPONSE);
+  shm_unlink(SHM_NAME_GAMESTATE);
   
   // TODO Student END
 }
@@ -112,6 +137,72 @@ char *cmdHandler(shmrequest *request)
   // TODO Student START
   // handle incoming commands, use provided functions:
   // setUpNewPuzzle(), updatePuzzle(), checkPuzzleSolved(), clearPuzzle()
+  if(strcmp(request->message, CMD_EXIT) == 0)
+  {
+    clearPuzzle();
+    mmaps.mapped_region_game_state_->game_active = 0;
+    return messages[9];
+  }
+  else if(strcmp(request->message, CMD_START) == 0)
+  {
+    if(mmaps.mapped_region_game_state_->game_active == 1)
+      return messages[1];
+    
+    mmaps.mapped_region_game_state_->game_active = 1;
+    setUpNewPuzzle();
+    mmaps.mapped_region_game_state_->player_lifepoints = PLAYER_INITIAL_LIFEPOINTS;
+    return messages[0];
+  }
+  else if(isCommandGuess(&request->message[0]) == 1)
+  {
+    if(mmaps.mapped_region_game_state_->game_active == 0)
+      return messages[2];
+    if(updatePuzzle(request->message[6]) == 0)
+    {
+      mmaps.mapped_region_game_state_->player_lifepoints--;
+      if(mmaps.mapped_region_game_state_->player_lifepoints == 0)
+      {
+        mmaps.mapped_region_game_state_->game_active = 0;
+        clearPuzzle();
+        return messages[7];
+      }
+      else
+       return messages[5];
+    }
+
+    for(int pos = 0; pos < strlen(mmaps.mapped_region_game_state_->puzzle); pos++)
+    {
+      if(mmaps.mapped_region_game_state_->puzzle[pos] == 95)
+        return messages[4];
+    }
+    
+    mmaps.mapped_region_game_state_->game_active = 0;
+    clearPuzzle();
+    return messages[6];
+  }
+  if(isCommandSolve(request->message) == 1)
+  {
+    if(mmaps.mapped_region_game_state_->game_active == 0)
+      return messages[2];
+    else if(checkPuzzleSolved(&request->message[6]) == 1)
+    {
+      clearPuzzle();
+      mmaps.mapped_region_game_state_->game_active = 0;
+      return messages[6];
+    }
+    else
+     return messages[7];;
+  }
+
+  if(strcmp(request->message, CMD_QUIT) == 0)
+  {
+    if(mmaps.mapped_region_game_state_->game_active == 0)
+      return messages[2];
+    mmaps.mapped_region_game_state_->game_active = 0;
+    clearPuzzle();
+    return messages[3];
+  }
+
 
   // TODO Student END
   return messages[8];

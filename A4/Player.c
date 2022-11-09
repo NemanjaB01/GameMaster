@@ -29,14 +29,22 @@ int startPlayer()
     // assigning/receiving to/from shared memory,
     // break the loop if the command received is 'exit game'.
     // (exit still has to be handled by the game master, though)
+  
+    int rvalue = getCommand(&buffer[0]);
+    if(rvalue == 0)
+      exit(-1);
+    strcpy(mmaps.mapped_region_request_->message, &buffer[0]);
+    sem_post(&mmaps.mapped_region_locks_->request_sem);
 
+    sem_wait(&mmaps.mapped_region_locks_->response_sem);
     // TODO Student END
 
     checkResults();
 
   } while (strcmp(buffer, CMD_EXIT) != 0);
-
+  wait(NULL);
   printf("[PLAYER] Bye!\n");
+
 
   closeMmapingsPlayer();
   checkCleanup();
@@ -62,6 +70,13 @@ void initProcess()
 
   // TODO Student START
   // start the game master and load the right executable
+  process_id = fork();
+  if(process_id == 0)
+  {
+    char *argv[]= {"./GameMaster", NULL};
+    execv(argv[0],argv);
+  }
+
 
   // TODO Student END
 }
@@ -80,6 +95,15 @@ void initSharedMemoriesPlayer()
 {
   // TODO Student START
   
+  fds.fd_shm_request_ = shm_open(SHM_NAME_REQUEST, FLAGS_SHM_READWRITE, MODERW);
+  ftruncate(fds.fd_shm_request_, sizeof(shmrequest));
+
+  fds.fd_shm_game_state_ = shm_open(SHM_NAME_GAMESTATE,  FLAGS_SHM_READONLY, MODERW);
+
+  fds.fd_shm_response_ = shm_open(SHM_NAME_RESPONSE, FLAGS_SHM_READONLY, MODERW);
+
+  fds.fd_shm_locks_ = shm_open(SHM_NAME_LOCKS, FLAGS_SHM_READWRITE, MODERW);
+  ftruncate(fds.fd_shm_locks_, sizeof(shmlocks));
   // TODO Student END
 }
 
@@ -98,7 +122,14 @@ void initMmapingsPlayer()
   }
 
   // TODO Student START
-  
+  mmaps.mapped_region_request_ = mmap(NULL, sizeof(shmrequest), PROT_READ | PROT_WRITE, MAP_SHARED, fds.fd_shm_request_, 0);
+  close(fds.fd_shm_request_);
+  mmaps.mapped_region_game_state_ = mmap(NULL, sizeof(shmgamestate), PROT_READ, MAP_SHARED,fds.fd_shm_game_state_, 0);
+  close(fds.fd_shm_game_state_);
+  mmaps.mapped_region_response_ = mmap(NULL, sizeof(shmresponse), PROT_READ , MAP_SHARED,fds.fd_shm_response_, 0);
+  close(fds.fd_shm_response_);
+  mmaps.mapped_region_locks_ = mmap(NULL, sizeof(shmlocks), PROT_READ | PROT_WRITE, MAP_SHARED, fds.fd_shm_locks_, 0);
+  close(fds.fd_shm_locks_);
   // TODO Student END
 }
 
@@ -112,7 +143,8 @@ void initMmapingsPlayer()
 void initLocks()
 {
   // TODO Student START
-  
+  sem_init(&mmaps.mapped_region_locks_->request_sem, 1, 0);
+  sem_init(&mmaps.mapped_region_locks_->response_sem, 1, 0);
   // TODO Student END
 }
 /*-----------------------------------------------------------------
@@ -127,6 +159,14 @@ void initLocks()
 void closeMmapingsPlayer()
 {
   // TODO Student START
+  sem_destroy(&mmaps.mapped_region_locks_->request_sem);
+  sem_destroy(&mmaps.mapped_region_locks_->response_sem);
+  munmap(mmaps.mapped_region_locks_, sizeof(shmlocks));
+  munmap(mmaps.mapped_region_request_, sizeof(shmrequest));
+  munmap(mmaps.mapped_region_game_state_, sizeof(shmgamestate));
+  munmap(mmaps.mapped_region_response_, sizeof(shmresponse));
+  shm_unlink(SHM_NAME_REQUEST);
+  shm_unlink(SHM_NAME_LOCKS);
   
   // TODO Student END
 }
