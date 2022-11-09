@@ -99,8 +99,8 @@ typedef struct
 typedef struct
 {
   // TODO Student START
-  sem_t request_sem;
-  sem_t response_sem;
+  sem_t request_semaphore;
+  sem_t response_semaphore;
   // TODO Student END
 } shmlocks;
 

@@ -34,15 +34,14 @@ int startPlayer()
     if(rvalue == 0)
       exit(-1);
     strcpy(mmaps.mapped_region_request_->message, &buffer[0]);
-    sem_post(&mmaps.mapped_region_locks_->request_sem);
+    sem_post(&mmaps.mapped_region_locks_->request_semaphore);
 
-    sem_wait(&mmaps.mapped_region_locks_->response_sem);
+    sem_wait(&mmaps.mapped_region_locks_->response_semaphore);
     // TODO Student END
 
     checkResults();
 
   } while (strcmp(buffer, CMD_EXIT) != 0);
-  wait(NULL);
   printf("[PLAYER] Bye!\n");
 
 
@@ -143,8 +142,8 @@ void initMmapingsPlayer()
 void initLocks()
 {
   // TODO Student START
-  sem_init(&mmaps.mapped_region_locks_->request_sem, 1, 0);
-  sem_init(&mmaps.mapped_region_locks_->response_sem, 1, 0);
+  sem_init(&mmaps.mapped_region_locks_->request_semaphore, 1, 0);
+  sem_init(&mmaps.mapped_region_locks_->response_semaphore, 1, 0);
   // TODO Student END
 }
 /*-----------------------------------------------------------------
@@ -159,14 +158,16 @@ void initLocks()
 void closeMmapingsPlayer()
 {
   // TODO Student START
-  sem_destroy(&mmaps.mapped_region_locks_->request_sem);
-  sem_destroy(&mmaps.mapped_region_locks_->response_sem);
+  sem_destroy(&mmaps.mapped_region_locks_->request_semaphore);
+  sem_destroy(&mmaps.mapped_region_locks_->response_semaphore);
   munmap(mmaps.mapped_region_locks_, sizeof(shmlocks));
   munmap(mmaps.mapped_region_request_, sizeof(shmrequest));
   munmap(mmaps.mapped_region_game_state_, sizeof(shmgamestate));
   munmap(mmaps.mapped_region_response_, sizeof(shmresponse));
   shm_unlink(SHM_NAME_REQUEST);
   shm_unlink(SHM_NAME_LOCKS);
+  shm_unlink(SHM_NAME_RESPONSE);
+  shm_unlink(SHM_NAME_GAMESTATE);
   
   // TODO Student END
 }

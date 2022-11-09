@@ -34,10 +34,10 @@ int startGameMaster()
   {
     // TODO Student START
   
-    sem_wait(&mmaps.mapped_region_locks_->request_sem);
+    sem_wait(&mmaps.mapped_region_locks_->request_semaphore);
     char* response = cmdHandler(mmaps.mapped_region_request_);
     strcpy(mmaps.mapped_region_response_->message, response);
-    sem_post(&mmaps.mapped_region_locks_->response_sem);    
+    sem_post(&mmaps.mapped_region_locks_->response_semaphore);    
     // TODO Student END
 
   } while (strcmp(mmaps.mapped_region_request_->message, CMD_EXIT) != 0);
@@ -118,10 +118,7 @@ void closeMmapingsGameMaster()
   munmap(mmaps.mapped_region_game_state_, sizeof(shmgamestate));
   munmap(mmaps.mapped_region_response_, sizeof(shmresponse));
   munmap(mmaps.mapped_region_locks_, sizeof(shmlocks));
-  munmap(mmaps.mapped_region_request_, sizeof(shmrequest));
-  shm_unlink(SHM_NAME_RESPONSE);
-  shm_unlink(SHM_NAME_GAMESTATE);
-  
+  munmap(mmaps.mapped_region_request_, sizeof(shmrequest));  
   // TODO Student END
 }
 
