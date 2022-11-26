@@ -16,6 +16,8 @@ namespace snp {
     // DO NOT MODIFY
     static void *_new(size_t size);
     static void _delete(void *ptr);
+    static size_t malloc_called_count() noexcept;
+    static size_t used_blocks_count() noexcept;
 
     // Feel free to add new members to this class.
 

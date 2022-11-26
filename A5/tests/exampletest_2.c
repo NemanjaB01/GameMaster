@@ -3,8 +3,17 @@
  *
  */
 #include "time.h"
-#include "assert.h"
 #include <stdlib.h>
+
+#ifdef assert
+#undef assert
+#endif
+#define assert(val) do {\
+ if ((val) == 0) exit(-1);\
+} while (0);
+
+extern size_t malloc_called_count();
+extern size_t used_blocks_count();
 
 #define MAX_ITER_COUNT 1000
 

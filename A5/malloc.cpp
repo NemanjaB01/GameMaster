@@ -28,6 +28,15 @@ void *Memory::calloc(size_t num_memb, size_t size_each)
   return 0;
 }
 
+size_t Memory::malloc_called_count() noexcept
+{
+  return 0;
+}
+
+size_t Memory::used_blocks_count() noexcept
+{
+  return 0;
+}
 
 
 

@@ -1,7 +1,16 @@
 #include "stdio.h"
 // #include "memory.h"
 #include "stdlib.h"
-#include "assert.h"
+
+#ifdef assert
+#undef assert
+#endif
+#define assert(val) do {\
+ if ((val) == 0) exit(-1);\
+} while (0);
+
+extern size_t malloc_called_count();
+extern size_t used_blocks_count();
 
 #define ARRAY_SIZE0 5
 #define ARRAY_SIZE1 20
@@ -18,6 +27,7 @@ int main() {
 
   data[0] = (int*) malloc(ARRAY_SIZE0 * sizeof(int));
   assert(data[0] != 0);
+  assert(malloc_called_count() == 1);
   data[1] = (int*) malloc(ARRAY_SIZE1 * sizeof(int));
   data[2] = (int*) malloc(ARRAY_SIZE2 * sizeof(int));
   data[3] = (int*) malloc(ARRAY_SIZE3 * sizeof(int));

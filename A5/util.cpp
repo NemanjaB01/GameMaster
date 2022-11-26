@@ -1,6 +1,7 @@
 #include "malloc.cpp"
 
-// DO NOT CHANGE ANYTHING IN THIS FILE
+// DO NOT MODIFY THE EXISTING FUNCTIONS IN THIS FILE
+// Your changed version will not be used by the testsystem.
 
 void* snp::sbrk(intptr_t __delta)
 {
@@ -25,6 +26,16 @@ void *malloc(size_t size) noexcept
 void free(void *ptr) noexcept
 {
   snp::Memory::free(ptr);
+}
+
+extern "C" size_t malloc_called_count()
+{
+  return snp::Memory::malloc_called_count();
+}
+
+extern "C" size_t used_blocks_count()
+{
+  return snp::Memory::used_blocks_count();
 }
 
 #ifdef NEW_ENABLED

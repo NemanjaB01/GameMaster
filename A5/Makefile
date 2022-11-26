@@ -1,6 +1,6 @@
 GCC=gcc
 GPP=g++
-FLAGS=-Wall -pthread -g -Wextra -Wconversion -Wpedantic
+FLAGS=-Wall -pthread -g -Wextra -Wconversion
 TITLE=a5_malloc
 BUILD_DIR=build
 
