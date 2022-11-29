@@ -49,6 +49,7 @@ void mergeFreeBlocks()
 
 void splitBlocks(Heap* used_block, size_t size)
 {
+  void* brea = snp::sbrk(0);
   Heap* tmp = used_block->next_;
   size_t address = (size_t)used_block + size*sizeof(size_t)+  1*sizeof(Heap);
   Heap* splited_block = (Heap*)address;
@@ -163,7 +164,7 @@ void *Memory::malloc(size_t size)
       used_block->free_ = false;
       used_block->available_ = false;
     }
-    else if((used_block->available_ == true) && ((used_block->size_of_block_) > (size + sizeof(Heap))))
+    else if((used_block->available_ == true) && ((used_block->size_of_block_) > (size*sizeof(size_t) + 1*sizeof(Heap))))
       splitBlocks(used_block, size);
     else
     {
@@ -290,9 +291,11 @@ size_t Memory::used_blocks_count() noexcept
   size_t used_blocks = 0;
   pthread_mutex_lock(&free_blocks_mutex);
   Heap* tmp = root;
+  if(tmp->available_ == false)
+    used_blocks++;
   while(tmp->next_ != NULL)
   {
-    if(tmp->available_ == false)
+    if(tmp->next_->available_ == false)
       used_blocks++;
     
     tmp = tmp->next_;
