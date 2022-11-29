@@ -1,5 +1,6 @@
 // This should have all the imports you need. Please don't import iostream.
 #include <cstddef>
+#include <cstdlib>
 #include <pthread.h>
 #include "memory.h"
 #include <new>
@@ -180,7 +181,7 @@ void *Memory::malloc(size_t size)
     else
     {
       Heap* new_block = NULL;
-      new_block = increaseProgramBreak(new_block, used_block->next_, size);
+      new_block = increaseProgramBreak(new_block, used_block, size);
       return new_block + sizeof(Heap);
     }
     
@@ -262,6 +263,8 @@ void checkIfBlockCanBeFree()
 
 void Memory::free(void *ptr)
 {
+  if(root == NULL)
+    exit(-1);
   Heap* temp = root;
   Heap* free_ptr = NULL;  
   if(ptr == (temp+sizeof(Heap)))
@@ -270,8 +273,7 @@ void Memory::free(void *ptr)
       exit(-1);
     else if(root->next_ == NULL)
     {
-      root->free_ = true;
-      root->available_ = true;
+      root = NULL;
       snp::brk(system_break);
     }
     else
