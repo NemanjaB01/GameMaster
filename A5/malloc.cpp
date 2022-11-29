@@ -269,7 +269,7 @@ void Memory::free(void *ptr)
     {
       root->free_ = true;
       root->available_ = true;
-      snp::sbrk(-(1*sizeof(Heap) + root->size_*sizeof(size_t)));
+      snp::brk(system_break);
     }
     else
     {
