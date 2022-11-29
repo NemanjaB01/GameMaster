@@ -31,7 +31,6 @@ size_t malloc_count = 0;
 void mergeFreeBlocks()
 {
   Heap* tmp = root;
-
   while(tmp->next_ != NULL)
   {
     if((tmp->available_ == true) && (tmp->next_->available_ == true))
@@ -39,7 +38,6 @@ void mergeFreeBlocks()
       Heap* temp = tmp->next_->next_;
       tmp->size_of_block_ = (tmp->size_of_block_ + tmp->next_->size_of_block_);
       tmp->size_ = (tmp->next_->size_ + tmp->size_ + 1*(sizeof(Heap))) ;
-      tmp->free_ = false;
       tmp->next_ = temp;
       continue;
     }
@@ -54,8 +52,8 @@ Heap* splitBlocks(Heap* used_block, size_t size)
   Heap* splited_block = (Heap*)address;
   splited_block->available_ = true;
   splited_block->free_ = false;
-  splited_block->size_ = used_block->size_ - size ;
-  splited_block->size_of_block_ = splited_block->size_*sizeof(size_t)+1*sizeof(Heap);
+  splited_block->size_of_block_ = used_block->size_of_block_ - ( size*sizeof(size_t)+  1*sizeof(Heap));
+  splited_block->size_ = used_block->size_ - size -1*sizeof(Heap);
   splited_block->next_ = tmp;
   splited_block->word_ = WORD;
 
@@ -121,7 +119,7 @@ Heap* increaseProgramBreak(Heap* new_block, Heap* used_block, size_t size)
     while(used_block->next_ != NULL)
       used_block = used_block->next_;
   }
-  size_t new_program_break =((size_t)used_block + used_block->size_*sizeof(Heap) + size*sizeof(size_t) + 2*sizeof(Heap));
+  size_t new_program_break = (size_t)used_block + used_block->size_of_block_ + size*(sizeof(size_t))+1*sizeof(Heap);
   snp::brk((void*)new_program_break);
   size_t address = (size_t)used_block + 1*sizeof(Heap) + size*sizeof(size_t);
   new_block = (Heap*)address;
@@ -192,18 +190,18 @@ void *Memory::malloc(size_t size)
     Heap* tmp = root;
     while(tmp->next_ != NULL)
       tmp = tmp->next_;
-    Heap* new_heap = (Heap*)snp::sbrk(size*sizeof(size_t)+1*sizeof(Heap)+ADDITIONAL_SIZE);
+    Heap* new_heap = (Heap*)snp::sbrk(2*sizeof(Heap) + size*sizeof(size_t) + 1*ADDITIONAL_SIZE);
     if(new_heap == (void*) -1)
       return NULL;
 
     size_t new_address = (size_t)new_heap +1*sizeof(Heap) + size*sizeof(size_t);
     Heap* free_block = (Heap*)new_address;
-    free_block->size_ = (ADDITIONAL_SIZE/sizeof(size_t)- 1*sizeof(Heap));
+    free_block->size_ = (ADDITIONAL_SIZE/sizeof(size_t));
     free_block->next_ = NULL;
     free_block->available_ = true;
     free_block->free_ = false;
     free_block->word_ = WORD;
-    free_block->size_of_block_ = ADDITIONAL_SIZE;
+    free_block->size_of_block_ = ADDITIONAL_SIZE+1*sizeof(Heap);
     
     new_heap->size_of_block_ = (size*sizeof(size_t) + 1*sizeof(Heap));
     new_heap->available_ = false;
@@ -227,14 +225,14 @@ void checkIfBlockCanBeFree()
   Heap* block_end = NULL;
   size_t num_of_frees = 0;
   size_t num_of_blocks = 1;
-  if(temp->available_ == true)
+  if((temp->available_ == true ) && (temp->free_ == true))
   {
     decrease_break_point+= temp->size_of_block_;
     num_of_frees++;
   }
   while(temp->next_ != NULL)
   {
-    if(temp->next_->available_ == true)
+    if((temp->next_->available_ == true) && (temp->next_->free_ == true))
     {
       decrease_break_point += temp->next_->size_of_block_;
       block_end = temp;
