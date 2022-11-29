@@ -9,7 +9,6 @@
 #define WORD "malloc"
 
 pthread_mutex_t malloc_mutex = PTHREAD_MUTEX_INITIALIZER;
-pthread_mutex_t free_blocks_mutex = PTHREAD_MUTEX_INITIALIZER;
 namespace snp
 {
 // TODO Student
@@ -47,24 +46,25 @@ void mergeFreeBlocks()
   }
 }
 
-void splitBlocks(Heap* used_block, size_t size)
+Heap* splitBlocks(Heap* used_block, size_t size)
 {
-  void* brea = snp::sbrk(0);
   Heap* tmp = used_block->next_;
   size_t address = (size_t)used_block + size*sizeof(size_t)+  1*sizeof(Heap);
   Heap* splited_block = (Heap*)address;
   splited_block->available_ = true;
   splited_block->free_ = false;
-  splited_block->size_ = used_block->size_ - size - 1*sizeof(Heap);
-  splited_block->size_of_block_ = used_block->size_of_block_ - 1*sizeof(Heap) - size*sizeof(size_t);
+  splited_block->size_ = used_block->size_ - size ;
+  splited_block->size_of_block_ = splited_block->size_*sizeof(size_t)+1*sizeof(Heap);
   splited_block->next_ = tmp;
   splited_block->word_ = WORD;
 
   used_block->available_ = false;
   used_block->free_ = false;
   used_block->size_ = size;
-  used_block->size_of_block_  = (size*sizeof(size_t)+ 1*sizeof(Heap));
+  used_block->size_of_block_ -= splited_block->size_of_block_;
   used_block->next_ = splited_block;
+
+  return used_block;
 }
 
 Heap* checkWhichBlockIsTheBest(Heap* tmp, Heap* free_block, size_t size)
@@ -74,9 +74,15 @@ Heap* checkWhichBlockIsTheBest(Heap* tmp, Heap* free_block, size_t size)
   else if((free_block != NULL) && (free_block->size_of_block_ > tmp->size_of_block_)
     && (tmp->size_of_block_ > (size*(sizeof(size_t)) + 1*sizeof(Heap))))
     free_block = tmp;
+  else if((free_block != NULL) && (free_block->size_of_block_ < (size*(sizeof(size_t)) + 1*sizeof(Heap)))
+    && (tmp->size_of_block_ > (size*(sizeof(size_t)) + 1*sizeof(Heap))))
+    free_block = tmp;
+  else if((free_block != NULL) && (tmp->size_of_block_ > free_block->size_of_block_)
+    && (free_block->size_of_block_ < (size*(sizeof(size_t)) + 1*sizeof(Heap))))
+    free_block = tmp;
   else if ((free_block == NULL) && (tmp->size_of_block_ > (size*sizeof(size_t) + 1*sizeof(Heap))))
     free_block = tmp;
-  else if((free_block == NULL) && (tmp->size_of_block_ < (size*sizeof(size_t))))
+  else if((free_block == NULL) && (tmp->size_of_block_ <= (size*sizeof(size_t) +1*sizeof(Heap))))
     free_block = tmp;
 
   return free_block;
@@ -86,11 +92,12 @@ Heap* checkForfreeBlock(size_t size)
 {
   Heap* free_block = NULL;
   Heap* tmp = root;
-  bool found_free_block = false;
   if(tmp->available_ == true)
+  {
     free_block = checkWhichBlockIsTheBest(tmp, free_block, size);
-  if(free_block == tmp)
-    return free_block;
+    if(free_block->size_ == size)
+      return free_block;
+  }
 
   while(tmp->next_ != NULL)
   {
@@ -102,15 +109,19 @@ Heap* checkForfreeBlock(size_t size)
     }
     tmp = tmp->next_;
   }
-  if((free_block == NULL) && (found_free_block == true))
-    return tmp;
 
   return free_block;
 }
 
-void increaseProgramBreak(Heap* new_block, Heap* used_block, size_t size)
+Heap* increaseProgramBreak(Heap* new_block, Heap* used_block, size_t size)
 {
-  snp::brk(used_block + used_block->size_of_block_ + size*sizeof(size_t) + 1*sizeof(Heap));
+  if(used_block->next_ != NULL)
+  {
+    while(used_block->next_ != NULL)
+      used_block = used_block->next_;
+  }
+  size_t new_program_break =((size_t)used_block + used_block->size_*sizeof(Heap) + size*sizeof(size_t) + 2*sizeof(Heap));
+  snp::brk((void*)new_program_break);
   size_t address = (size_t)used_block + 1*sizeof(Heap) + size*sizeof(size_t);
   new_block = (Heap*)address;
   new_block->size_of_block_ = (size*sizeof(size_t) + 1*sizeof(Heap));
@@ -120,6 +131,7 @@ void increaseProgramBreak(Heap* new_block, Heap* used_block, size_t size)
   new_block->next_ = NULL;
   new_block->size_ = size;
   used_block->next_ = new_block;
+  return new_block;
 }
 
 void *Memory::malloc(size_t size)
@@ -133,18 +145,17 @@ void *Memory::malloc(size_t size)
   if(root == NULL)
   {
     system_break = snp::sbrk(0);
-    size_t increase = 1*sizeof(Heap) + size*sizeof(size_t) + 1*ADDITIONAL_SIZE;
-    root = (Heap*)snp::sbrk(increase);
+    root = (Heap*)snp::sbrk(2*sizeof(Heap) + size*sizeof(size_t) + 1*ADDITIONAL_SIZE);
     if(root == (void*)-1)
       return NULL;
     size_t new_address = (size_t)root +1*sizeof(Heap) + size*sizeof(size_t);
     Heap* free_block = (Heap*)new_address;
-    free_block->size_ = (ADDITIONAL_SIZE/sizeof(size_t)- 1*sizeof(Heap));
+    free_block->size_ = (ADDITIONAL_SIZE/sizeof(size_t));
     free_block->next_ = NULL;
     free_block->available_ = true;
     free_block->free_ = false;
     free_block->word_ = WORD;
-    free_block->size_of_block_ = ADDITIONAL_SIZE;
+    free_block->size_of_block_ = ADDITIONAL_SIZE+1*sizeof(Heap);
 
     root->size_of_block_ = (size*sizeof(size_t) + 1*sizeof(Heap));
     root->size_ = size;
@@ -165,11 +176,11 @@ void *Memory::malloc(size_t size)
       used_block->available_ = false;
     }
     else if((used_block->available_ == true) && ((used_block->size_of_block_) > (size*sizeof(size_t) + 1*sizeof(Heap))))
-      splitBlocks(used_block, size);
+      used_block = splitBlocks(used_block, size);
     else
     {
       Heap* new_block = NULL;
-      increaseProgramBreak(new_block, used_block->next_, size);
+      new_block = increaseProgramBreak(new_block, used_block->next_, size);
       return new_block + sizeof(Heap);
     }
     
@@ -213,28 +224,37 @@ void checkIfBlockCanBeFree()
   Heap* temp = root;
   size_t decrease_break_point = 0;
   Heap* block_end = NULL;
-  if(temp->available_ == true)
+  size_t num_of_frees = 0;
+  size_t num_of_blocks = 1;
+  if((temp->available_ == true) && (temp->free_ == true))
+  {
     decrease_break_point+= temp->size_of_block_;
-
+    num_of_frees++;
+  }
   while(temp->next_ != NULL)
   {
-    if(temp->next_->available_ == true)
+    if((temp->next_->available_ == true)&&(temp->next_->free_==true))
     {
       decrease_break_point += temp->next_->size_of_block_;
       block_end = temp;
+      num_of_frees++;
     }
     else
     {
       decrease_break_point = 0;
       block_end = NULL;
     }
-
+    num_of_blocks++;
     temp = temp->next_;
   }
   if(block_end == NULL)
     return;
   block_end->next_ = NULL;
+  if(num_of_frees == num_of_blocks)
+    root = NULL;
+
   sbrk(-decrease_break_point);
+
 }
 
 void Memory::free(void *ptr)
@@ -246,7 +266,11 @@ void Memory::free(void *ptr)
     if(root->free_ == true)
       exit(-1);
     else if(root->next_ == NULL)
-      snp::sbrk(-(1*sizeof(Heap) + temp->next_->size_*sizeof(size_t)));
+    {
+      root->free_ = true;
+      root->available_ = true;
+      snp::sbrk(-(1*sizeof(Heap) + root->size_*sizeof(size_t)));
+    }
     else
     {
       root->free_ = true;
@@ -289,7 +313,7 @@ size_t Memory::malloc_called_count() noexcept
 size_t Memory::used_blocks_count() noexcept
 {
   size_t used_blocks = 0;
-  pthread_mutex_lock(&free_blocks_mutex);
+ 
   if(root== NULL)
     return used_blocks;
   Heap* tmp = root;
@@ -302,8 +326,6 @@ size_t Memory::used_blocks_count() noexcept
     
     tmp = tmp->next_;
   }
-  pthread_mutex_unlock(&free_blocks_mutex);
-
 
   return used_blocks;
 }
