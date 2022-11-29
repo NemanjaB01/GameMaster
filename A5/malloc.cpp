@@ -9,6 +9,7 @@
 #define WORD "malloc"
 
 pthread_mutex_t malloc_mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t free_blocks_mutex = PTHREAD_MUTEX_INITIALIZER;
 namespace snp
 {
 // TODO Student
@@ -122,7 +123,9 @@ void increaseProgramBreak(Heap* new_block, Heap* used_block, size_t size)
 
 void *Memory::malloc(size_t size)
 {
+  pthread_mutex_lock(&malloc_mutex);
   malloc_count++;
+  pthread_mutex_unlock(&malloc_mutex);
   if(size == 0)
     return NULL;
 
@@ -285,8 +288,8 @@ size_t Memory::malloc_called_count() noexcept
 size_t Memory::used_blocks_count() noexcept
 {
   size_t used_blocks = 0;
+  pthread_mutex_lock(&free_blocks_mutex);
   Heap* tmp = root;
-
   while(tmp->next_ != NULL)
   {
     if(tmp->available_ == false)
@@ -294,6 +297,8 @@ size_t Memory::used_blocks_count() noexcept
     
     tmp = tmp->next_;
   }
+  pthread_mutex_unlock(&free_blocks_mutex);
+
 
   return used_blocks;
 }
