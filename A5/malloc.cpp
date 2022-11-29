@@ -37,7 +37,7 @@ void mergeFreeBlocks()
     {
       Heap* temp = tmp->next_->next_;
       tmp->size_of_block_ = (tmp->size_of_block_ + tmp->next_->size_of_block_);
-      tmp->size_ = (tmp->next_->size_ + tmp->size_ + 1*(sizeof(Heap))) ;
+      tmp->size_ = tmp->next_->size_ + tmp->size_ + ((1*(sizeof(Heap)))/sizeof(size_t)) ;
       tmp->next_ = temp;
       continue;
     }
@@ -53,7 +53,7 @@ Heap* splitBlocks(Heap* used_block, size_t size)
   splited_block->available_ = true;
   splited_block->free_ = false;
   splited_block->size_of_block_ = used_block->size_of_block_ - ( size*sizeof(size_t)+  1*sizeof(Heap));
-  splited_block->size_ = used_block->size_ - size -1*sizeof(Heap);
+  splited_block->size_ = used_block->size_ - size -((1*sizeof(Heap))/sizeof(size_t));
   splited_block->next_ = tmp;
   splited_block->word_ = WORD;
 
@@ -79,9 +79,9 @@ Heap* checkWhichBlockIsTheBest(Heap* tmp, Heap* free_block, size_t size)
   else if((free_block != NULL) && (tmp->size_of_block_ > free_block->size_of_block_)
     && (free_block->size_of_block_ < (size*(sizeof(size_t)) + 1*sizeof(Heap))))
     free_block = tmp;
-  else if ((free_block == NULL) && (tmp->size_of_block_ > (size*sizeof(size_t) + 1*sizeof(Heap))))
+  else if ((tmp->size_of_block_ > (size*sizeof(size_t) + 1*sizeof(Heap))))
     free_block = tmp;
-  else if((free_block == NULL) && (tmp->size_of_block_ <= (size*sizeof(size_t) +1*sizeof(Heap))))
+  else if((tmp->size_of_block_ <= (size*sizeof(size_t) +1*sizeof(Heap))))
     free_block = tmp;
 
   return free_block;
@@ -225,14 +225,14 @@ void checkIfBlockCanBeFree()
   Heap* block_end = NULL;
   size_t num_of_frees = 0;
   size_t num_of_blocks = 1;
-  if((temp->available_ == true ) && (temp->free_ == true))
+  if(temp->available_ == true)
   {
     decrease_break_point+= temp->size_of_block_;
     num_of_frees++;
   }
   while(temp->next_ != NULL)
   {
-    if((temp->next_->available_ == true) && (temp->next_->free_ == true))
+    if(temp->next_->available_ == true)
     {
       decrease_break_point += temp->next_->size_of_block_;
       block_end = temp;
