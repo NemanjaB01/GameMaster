@@ -226,14 +226,14 @@ void checkIfBlockCanBeFree()
   Heap* block_end = NULL;
   size_t num_of_frees = 0;
   size_t num_of_blocks = 1;
-  if((temp->available_ == true) && (temp->free_ == true))
+  if(temp->available_ == true)
   {
     decrease_break_point+= temp->size_of_block_;
     num_of_frees++;
   }
   while(temp->next_ != NULL)
   {
-    if((temp->next_->available_ == true)&&(temp->next_->free_==true))
+    if(temp->next_->available_ == true)
     {
       decrease_break_point += temp->next_->size_of_block_;
       block_end = temp;
@@ -251,8 +251,11 @@ void checkIfBlockCanBeFree()
     return;
   block_end->next_ = NULL;
   if(num_of_frees == num_of_blocks)
+  {
+    snp::brk(system_break);
     root = NULL;
-
+    return;
+  }
   sbrk(-decrease_break_point);
 
 }
