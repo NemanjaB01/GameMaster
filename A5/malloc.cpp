@@ -290,6 +290,8 @@ size_t Memory::used_blocks_count() noexcept
 {
   size_t used_blocks = 0;
   pthread_mutex_lock(&free_blocks_mutex);
+  if(root== NULL)
+    return used_blocks;
   Heap* tmp = root;
   if(tmp->available_ == false)
     used_blocks++;
