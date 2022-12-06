@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdint.h>
+#include <string.h>
 
 int main()
 {
@@ -11,10 +12,26 @@ int main()
      *       Print the values to stdout in the given formats.
      *       Feel free to modify this file wherever you want.
      */
+     char edx[8];
+     char ebx[8];
+     char ecx[8];
+     
+     asm("cpuid" : "=d"(edx), "=b"(ebx),"=c"(ecx) : "a"(0));
+     char id[13];
+     strcpy(id,ebx);
+     strcat(id,edx);
+     strcat(id, ecx);
+     id[12] = '\0';
 
-    // printf("Manufacturer id: %s\n", ...);
+    printf("Manufacturer id: %s\n", id);
 
-    // printf("Number of Linear Address Bits: %u\n", ...);
+    unsigned int linear_address;
+    asm("cpuid" : "=a"(linear_address) :"a"(80000008));
+    
+    linear_address = linear_address >> 8;
+    linear_address = linear_address & 255;
+
+    printf("Number of Linear Address Bits: %u\n", linear_address);
 
     /* printf("fpu: %u, apic: %u, acpi: %u, sse: %u, aes: %u, avx512: %u, smap: %u, vaes: %u\n",
                ..., ..., ..., ..., ..., ..., ..., ...); */
