@@ -25,14 +25,41 @@ int main()
 
     printf("Manufacturer id: %s\n", id);
 
-    unsigned int linear_address;
-    asm("cpuid" : "=a"(linear_address) :"a"(80000008));
+    unsigned int linear_address, fpu, apic, acpi, sse, aes, avx512, smap, vaes ,value;
+    asm("movl $0x80000008, %eax");
+    asm( "cpuid" : "=eax"(linear_address)::"cc");
     
     linear_address = linear_address >> 8;
     linear_address = linear_address & 255;
 
     printf("Number of Linear Address Bits: %u\n", linear_address);
 
-    /* printf("fpu: %u, apic: %u, acpi: %u, sse: %u, aes: %u, avx512: %u, smap: %u, vaes: %u\n",
-               ..., ..., ..., ..., ..., ..., ..., ...); */
+    asm("movl $0x01, %eax");
+    asm("cpuid": "=edx"(value),"=ecx"(aes));
+    fpu = value & 1;
+    acpi = value >> 22;
+    acpi = acpi & 1;
+    sse = value >> 25;
+    sse = sse & 1;
+    aes = aes >> 25;
+    aes = aes & 1;
+
+    asm("movl $0x80000001, %eax");
+    asm("cpuid": "=eax"(value));
+    apic = value >> 9;
+    apic = apic & 1;
+
+    asm("movl $0x07, %eax");
+    asm("movl $0x00, %ecx");
+    asm("cpuid": "=ebx"(smap),"=ecx"(value)::"cc");
+    smap = value >> 20;
+    smap = smap & 1;
+    vaes = value >> 9;
+    vaes = vaes & 1;
+    avx512 = value >> 6;
+    avx512 = avx512& 1;
+    
+
+    printf("fpu: %u, apic: %u, acpi: %u, sse: %u, aes: %u, avx512: %u, smap: %u, vaes: %u\n",
+            fpu,apic,acpi,sse,aes,avx512,smap,vaes);
 }
