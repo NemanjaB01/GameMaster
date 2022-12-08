@@ -69,12 +69,12 @@ int main(int argc, char **argv)
         "mov %2,%%esi\n"
         "movq %3,%%xmm0\n"
         "movq %4,%%xmm1\n"
-        "mov %5,%%edx\n"
+        "mov %5,%%rdx\n"
         "call countInRange\n"
         "mov %%eax, %0\n"
         : "=r"(nr_matches)
-        : "r"(numbers),"r"(array_len),"r"(lower),"r"(upper),"r"(first_match)
-        : "eax","rdi","xmm0","xmm1","edx","esi","cc");
+        : "r"(numbers),"r"(array_len),"r"(lower),"r"(upper),"r"(&first_match)
+        : "rax","rdi","xmm0","xmm1","rdx","rsi","cc");
 
     // ########## TODO END ##########
 
