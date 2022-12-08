@@ -65,6 +65,17 @@ int main(int argc, char **argv)
     // ########## TODO START ##########
     // System V AMD64 ABI implementation (64-bit)
 
+    asm("mov (%1),%%rdi\n"
+        "mov %2,%%esi\n"
+        "movq %3,%%xmm0\n"
+        "movq %4,%%xmm1\n"
+        "mov (%5),%%rdx\n"
+        "call countInRange\n"
+        "mov %%eax, %0\n"
+        : "=r"(nr_matches)
+        : "r"(numbers),"r"(array_len),"r"(lower),"r"(upper),"r"(first_match)
+        : "eax","rdi","xmm0","xmm1","rdx","esi","cc");
+
     // ########## TODO END ##########
 
     printf("Function returned: %d in range.\n", nr_matches);
