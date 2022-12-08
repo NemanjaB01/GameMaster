@@ -65,11 +65,11 @@ int main(int argc, char **argv)
     // ########## TODO START ##########
     // System V AMD64 ABI implementation (64-bit)
 
-    asm("mov (%1),%%rdi\n"
+    asm("mov %1,%%rdi\n"
         "mov %2,%%esi\n"
         "movq %3,%%xmm0\n"
         "movq %4,%%xmm1\n"
-        "mov (%5),%%rdx\n"
+        "mov %5,%%rdx\n"
         "call countInRange\n"
         "mov %%eax, %0\n"
         : "=r"(nr_matches)
