@@ -35,7 +35,7 @@ int main()
     printf("Number of Linear Address Bits: %u\n", linear_address);
 
     asm("movl $0x01, %%eax\n"
-        "cpuid": "=edx"(value),"=ecx"(aes)::"cc","eax","edx","ecx");
+        "cpuid": "=edx"(value),"=ecx"(aes)::"cc");
     fpu = value & 1;
     acpi = value >> 22;
     acpi = acpi & 1;
@@ -51,7 +51,7 @@ int main()
 
     asm("movl $0x07, %%eax\n"
         "movl $0x00, %%ecx\n"
-        "cpuid": "=ebx"(smap),"=ecx"(value)::"cc", "ebx","ecx","eax");
+        "cpuid": "=ebx"(smap),"=ecx"(value)::"cc");
     smap = value >> 20;
     smap = smap & 1;
     vaes = value >> 9;
