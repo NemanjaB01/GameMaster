@@ -74,7 +74,7 @@ int main(int argc, char **argv)
         "mov %%eax, %0\n"
         : "=r"(nr_matches)
         : "r"(numbers),"r"(array_len),"r"(lower),"r"(upper),"r"(&first_match)
-        : "rax","rdi","xmm0","xmm1","rdx","rsi","cc");
+        : "rax","rdi","xmm0","xmm1","rdx","rsi","cc","memory");
 
     // ########## TODO END ##########
 
