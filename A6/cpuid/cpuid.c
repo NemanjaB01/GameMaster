@@ -16,7 +16,7 @@ int main()
      char ebx[8];
      char ecx[8];
      
-     asm("cpuid" : "=d"(edx), "=b"(ebx),"=c"(ecx) : "eax"(0):"cc","eax");
+     asm("cpuid" : "=d"(edx), "=b"(ebx),"=c"(ecx) : "a"(0):"cc");
      char id[13];
      strcpy(id,ebx);
      strcat(id,edx);
